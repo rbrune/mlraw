@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script src="processing.js"></script>
+</head>
+<body>
+<script type="application/processing" target="sketch">
+
+
+var mycolor=80;
+
+canvas_x = 600;
+canvas_y = 400;
+center_x = canvas_x/2.0;
+center_y = canvas_y/2.0;
+center_width = 500;
+
+camera_name = 'None';
+camera_bandwidth = 0.0 * 1024 * 1024;
+camera_bandwidth_max = 40.0 * 1024 * 1024;
+sensor_x = 1;
+sensor_y = 1;
+sensor_crop = 1.0;
+mode_ss_x = 3;
+mode_ss_y = 3;
+mode_fps = 24;
+mode_ar_x = 16;
+mode_ar_y = 9;
+
+void draw_outline(t_x, t_y, t_max_x, t_max_y, t_crop, t_color, t_name, t_name2, t_name3) {
+
+	stroke(t_color);
+	noFill();
+	
+	wx = 1.0 * t_x/t_max_x*center_width / t_crop;
+	//wy = 1.0 * t_x/t_max_x*t_y/t_x*center_width / t_crop;
+	wy = wx * t_y/t_x;
+	
+	rect(center_x - wx/2.0, center_y - wy/2.0, wx, wy);
+	
+	fill(t_color);
+	textAlign(LEFT);
+	text(t_name, 2 + center_x - wx/2.0, + 11 + center_y - wy/2.0);
+
+	fill(t_color);
+	textAlign(CENTER);
+	text(t_name2, center_x, -1 + center_y - wy/2.0);
+
+	fill(t_color);
+	textAlign(RIGHT);
+	text(t_name3, -1 + center_x + wx/2.0, -2 + center_y + wy/2.0);
+}
+
+void setup() {
+	size(canvas_x, canvas_y);
+	frameRate(8);
+}
+
+void draw() {
+	background(255);
+	
+	//stroke(64);
+	//fill(mycolor);
+	//noFill();
+	//rect(100, 100, 160, 160);
+	
+	// draw standard frame outlines
+	draw_outline(3, 2, 3, 2, 1.00, 231, '3:2 1.00x 35mm full frame', '', '');
+	draw_outline(3, 2, 3, 2, 1.62, 231, '3:2 1.62x Canon APS-C', '', '');
+	
+	// draw sensor
+	//draw_outline(sensor_x, sensor_y, sensor_x, sensor_y, sensor_crop, 32, '', camera_name, str(sensor_x) + str('x') + str(sensor_y));
+	
+	calc_max();
+	
+	// print info
+	fill(16);
+	textAlign(LEFT);
+
+	t_text = str('Camera:    ') + str(camera_name) + str(', max. ') + nf(camera_bandwidth_max/1024/1024,1,1) + str('MB/s, ') + str(sensor_x) + str('x') + str(sensor_y) + str(', ') + nf(sensor_crop,1,2) + str('x crop');
+	text(t_text, 5, canvas_y - 18);
+	
+	
+	t_res = nf(1.0/squeeze,1,3) + str('x squeeze ') + str(last_x) + str('x') + str(last_y);
+	if (squeeze == 1.0) {
+		t_res = str(last_x) + str('x') + str(last_y);
+	}
+	
+	t_text = str('Selected mode:   ') + str(mode_ss_x) + str('x') + str(mode_ss_y) + str(' sampling, ') + str(mode_ar_x) + str(':') + str(mode_ar_y) + str(' aspect ratio, ') + nf(last_crop,1,2) + str('x crop, ') + str(t_res) + str(' ') + str(mode_fps) + str('fps, ') + nf(last_bw/1024/1024,1,1) + str('MB/s ');
+	text(t_text, 5, canvas_y - 5);
+	
+
+}
+
+void calc_max() {
+	n_max_x = sensor_x/mode_ss_x;
+	n_max_y = sensor_y/mode_ss_y;
+	
+	squeeze = 1.0 * mode_ss_x/mode_ss_y;
+	
+	last_x = 0;
+	last_y = 0;
+	last_bw = 0;
+	last_crop = 0.0;
+	
+	for (xi=1; xi < 200; xi++) {
+		t_x = xi * 32;
+		t_y = int(squeeze * t_x * mode_ar_y/mode_ar_x + 1);
+		if (t_y%2) {
+			 t_y -= 1;
+		}
+		t_bw = 1.0 * t_x * t_y * mode_fps * 14 / 8;
+		t_crop = sensor_crop * sensor_x / (mode_ss_x * t_x);
+		
+		if (t_x > n_max_x) continue;
+		if (t_y > n_max_y) continue;
+		if (t_bw > camera_bandwidth) continue;
+		if (t_bw < last_bw) continue;
+		
+		// camera/sensor limits/quirks
+		// 50D
+		if (camera_name.equals('50D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2000)) continue;
+		if (camera_name.equals('50D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1080)) continue;
+		// 5D2
+		if (camera_name.equals('5D Mark II') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2144)) continue;
+		if (camera_name.equals('5D Mark II') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1076)) continue;
+		// 5D3
+		if (camera_name.equals('5D Mark III') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 3584)) continue;
+		if (camera_name.equals('5D Mark III') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1320)) continue;
+		// 6D
+		if (camera_name.equals('6D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2560)) continue;
+		if (camera_name.equals('6D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y >  944)) continue;
+		// 7D
+		if (camera_name.equals('7D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2512)) continue;
+		if (camera_name.equals('7D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1200)) continue;
+		// 650D
+		if (camera_name.equals('650D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2512)) continue;
+		if (camera_name.equals('650D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1076)) continue;
+		// 550D
+		if (camera_name.equals('550D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2512)) continue;
+		if (camera_name.equals('550D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1080)) continue;
+		// 500D
+		if (camera_name.equals('500D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2000)) continue;
+		if (camera_name.equals('500D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y >  838)) continue;
+		if (camera_name.equals('500D') && (mode_ss_x == 3) && (mode_ss_y == 3) && (mode_fps > 22)) continue;
+		if (camera_name.equals('500D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (mode_fps > 22)) continue;
+		// EOS-M
+		if (camera_name.equals('EOS-M') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2496)) continue;
+		if (camera_name.equals('EOS-M') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1056)) continue;
+		if (camera_name.equals('EOS-M') && (mode_ss_x == 3) && (mode_ss_y == 3) && (t_x > 0)) continue;
+		if (camera_name.equals('EOS-M') && (mode_ss_x == 3) && (mode_ss_y == 3) && (t_y > 0)) continue;
+		if (camera_name.equals('EOS-M') && (mode_ss_x == 3) && (mode_ss_y == 5) && (mode_fps > 30)) continue;
+
+		
+		// all cameras 50/60fps limits
+		if ((mode_ss_x == 3) && (mode_ss_y == 3) && (mode_fps > 30)) continue;
+		if ((mode_ss_x == 1) && (mode_ss_y == 1) && (mode_fps > 30)) continue;
+		
+		
+		
+		last_x = t_x;
+		last_y = t_y;
+		last_bw = t_bw;
+		last_crop = t_crop;
+		
+	}
+	
+	text1 = str(mode_ar_x) + str(':') + str(mode_ar_y) + str(' ') + nf(last_crop,1,2) + str('x crop');
+	text2 = nf(last_bw/1024/1024,1,1) + str('MB/s ') ;
+	text3 = nf(1.0/squeeze,1,3) + str('x squeeze ') + str(last_x) + str('x') + str(last_y);
+	if (squeeze == 1.0) {
+		text3 = str(last_x) + str('x') + str(last_y);
+	}
+	
+	draw_outline(last_x, last_y/squeeze, n_max_x, n_max_y/squeeze, sensor_crop, 32, text1, text2, text3);
+}
+
+void setCamera(t_camera_name, t_camera_bandwidth, t_sensor_x, t_sensor_y, t_sensor_crop) {
+	camera_name = t_camera_name;
+	camera_bandwidth = t_camera_bandwidth;
+	camera_bandwidth_max = t_camera_bandwidth;
+	sensor_x = t_sensor_x;
+	sensor_y = t_sensor_y;
+	sensor_crop = t_sensor_crop;	
+}
+
+void setAspect(t_mode_ar_x, t_mode_ar_y) {
+	mode_ar_x = t_mode_ar_x;
+	mode_ar_y = t_mode_ar_y;
+}
+
+void setSampling(t_mode_ss_x, t_mode_ss_y){
+	mode_ss_x = t_mode_ss_x;
+	mode_ss_y = t_mode_ss_y;
+}
+
+void setFps(t_mode_fps){
+	mode_fps = t_mode_fps;
+}
+
+void setBandwidth(t_camera_bandwidth){
+	camera_bandwidth = t_camera_bandwidth * 1024 * 1024;
+}
+
+</script>
+
+<canvas id="sketch"></canvas></p>
+<div style="height:0px;widht:0px;overflow:hidden;"></div>
+
+Cameras:<br>
+<button onClick="Processing.getInstanceById('sketch').setCamera('500D',         21*1024*1024, 4752, 3168, 1.62);">500D</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('550D',         21*1024*1024, 5184, 3456, 1.62);">550D</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('650D',         40*1024*1024, 5184, 3456, 1.62);">650D</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('EOS-M',        40*1024*1024, 5184, 3456, 1.62);">EOS-M</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('50D',          70*1024*1024, 4752, 3168, 1.62);">50D</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('7D',           80*1024*1024, 5184, 3456, 1.62);">7D</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('6D',           40*1024*1024, 5472, 3658, 1.00);">6D</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('5D Mark II',   75*1024*1024, 5616, 3744, 1.00);">5D Mark II</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('5D Mark III', 100*1024*1024, 5760, 3840, 1.00);">5D Mark III</button>
+
+<br><br>
+Sampling mode (1x1 zoom mode, 3x3 1080p mode, 3x5 720p 50/60fps mode):<br>
+<button onClick="Processing.getInstanceById('sketch').setSampling(1, 1);">1x1 subsampling</button>
+<button onClick="Processing.getInstanceById('sketch').setSampling(3, 3);">3x3 subsampling</button>
+<button onClick="Processing.getInstanceById('sketch').setSampling(3, 5);">3x5 subsampling</button>
+
+<br><br>
+Aspect ratios:<br>
+<button onClick="Processing.getInstanceById('sketch').setAspect(2.39, 1);">2.39:1</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(2.35, 1);">2.35:1</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(1.85, 1);">1.85:1</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(16, 9);">16:9</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(5, 3);">5:3</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(16, 10);">16:10</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(3, 2);">3:2</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(1.43, 1);">1.43:1</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(4, 3);">4:3</button>
+<button onClick="Processing.getInstanceById('sketch').setAspect(5, 4);">5:4</button>
+<br>
+<input type="textfield" value="3.00" id="inputAspect1" size="5" style="text-align: right"/>:<input type="textfield" value="1" id="inputAspect2" size="5"/> 
+<button onClick="Processing.getInstanceById('sketch').setAspect( document.getElementById('inputAspect1').value, document.getElementById('inputAspect2').value );">set aspect ratio</button>
+
+
+<br><br>
+Frame rate (50/60fps only usable with 3x5 subsampling):<br>
+<button onClick="Processing.getInstanceById('sketch').setFps(20);">20</button>
+<button onClick="Processing.getInstanceById('sketch').setFps(24);">24</button>
+<button onClick="Processing.getInstanceById('sketch').setFps(25);">25</button>
+<button onClick="Processing.getInstanceById('sketch').setFps(30);">30</button>
+<button onClick="Processing.getInstanceById('sketch').setFps(50);">50</button>
+<button onClick="Processing.getInstanceById('sketch').setFps(60);">60</button>
+
+<br><br>
+Max. write speed (to simulate faster card interface or slower/more realistic writing speeds, use ML to measure your actual writing speed):<br>
+<input type="textfield" value="21" id="inputBandwidth" size="5" style="text-align: right"/>MB/s 
+<button onClick="Processing.getInstanceById('sketch').setBandwidth( document.getElementById('inputBandwidth').value );">set bandwidth</button>
+
+<br>
+<br>
+<br>
+Debug settings/fun:<br>
+<button onClick="Processing.getInstanceById('sketch').setCamera('5D S/R', 100*1024*1024, 8688, 5792, 1.00);">5D S/R</button>
+<button onClick="Processing.getInstanceById('sketch').setSampling(5, 5);">5x5 subsampling</button>
+<br>
+<br>
+<br>
+
+(C) Rafael Brune | http://github.com/rbrune
+
+</body>
+</html>
