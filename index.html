@@ -9,7 +9,7 @@
 
 var mycolor=80;
 
-canvas_x = 600;
+canvas_x = 700;
 canvas_y = 400;
 center_x = canvas_x/2.0;
 center_y = canvas_y/2.0;
@@ -65,8 +65,10 @@ void draw() {
 	//rect(100, 100, 160, 160);
 	
 	// draw standard frame outlines
-	draw_outline(3, 2, 3, 2, 1.00, 231, '3:2 1.00x 35mm full frame', '', '');
-	draw_outline(3, 2, 3, 2, 1.62, 231, '3:2 1.62x Canon APS-C', '', '');
+	draw_outline(3, 2, 3, 2, 1.00, 231, '1.00x 35mm full frame', '', '');
+	draw_outline(3, 2, 3, 2, 1.62, 231, '1.62x Canon APS-C', '', '');
+    draw_outline(133, 100, 133, 100, 1.45, 231, '1.45x Super35 4-perf', '', '');
+    draw_outline(169, 100, 169, 100, 2.87, 231, '2.87x Super16', '', '');
 	
 	// draw sensor
 	//draw_outline(sensor_x, sensor_y, sensor_x, sensor_y, sensor_crop, 32, '', camera_name, str(sensor_x) + str('x') + str(sensor_y));
@@ -86,9 +88,11 @@ void draw() {
 		t_res = str(last_x) + str('x') + str(last_y);
 	}
 	
-	t_text = str('Selected mode:   ') + str(mode_ss_x) + str('x') + str(mode_ss_y) + str(' sampling, ') + str(mode_ar_x) + str(':') + str(mode_ar_y) + str(' aspect ratio, ') + nf(last_crop,1,2) + str('x crop, ') + str(t_res) + str(' ') + str(mode_fps) + str('fps, ') + nf(last_bw/1024/1024,1,1) + str('MB/s ');
-	text(t_text, 5, canvas_y - 5);
-	
+    if (last_bw > 0) {
+        t_text = str('Selected mode:   ') + str(mode_ss_x) + str('x') + str(mode_ss_y) + str(' sampling, ') + str(mode_ar_x) + str(':') + str(mode_ar_y) + str(' aspect ratio, ') + nf(last_crop,1,2) + str('x crop, ') + str(t_res) + str(' ') + str(mode_fps) + str('fps, ') + nf(last_bw/1024/1024,1,1) + str('MB/s ~') + nf(32*1000*1000*1000/60/last_bw,1,1) + str('min per 32GB card');
+        text(t_text, 5, canvas_y - 5);
+	}
+    
 
 }
 
@@ -136,6 +140,9 @@ void calc_max() {
 		// 650D
 		if (camera_name.equals('650D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2512)) continue;
 		if (camera_name.equals('650D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1076)) continue;
+		// 600D
+		if (camera_name.equals('600D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2512)) continue;
+		if (camera_name.equals('600D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1080)) continue;
 		// 550D
 		if (camera_name.equals('550D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2512)) continue;
 		if (camera_name.equals('550D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1080)) continue;
@@ -210,6 +217,7 @@ void setBandwidth(t_camera_bandwidth){
 Cameras:<br>
 <button onClick="Processing.getInstanceById('sketch').setCamera('500D',         21*1024*1024, 4752, 3168, 1.62);">500D</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('550D',         21*1024*1024, 5184, 3456, 1.62);">550D</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('600D',         21*1024*1024, 5184, 3456, 1.62);">600D</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('650D',         40*1024*1024, 5184, 3456, 1.62);">650D</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('EOS-M',        40*1024*1024, 5184, 3456, 1.62);">EOS-M</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('50D',          70*1024*1024, 4752, 3168, 1.62);">50D</button>
