@@ -122,6 +122,9 @@ void calc_max() {
 		if (t_bw < last_bw) continue;
 		
 		// camera/sensor limits/quirks
+		// 60D
+		if (camera_name.equals('60D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2512)) continue;
+		if (camera_name.equals('60D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1080)) continue;
 		// 50D
 		if (camera_name.equals('50D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_x > 2000)) continue;
 		if (camera_name.equals('50D') && (mode_ss_x == 1) && (mode_ss_y == 1) && (t_y > 1080)) continue;
@@ -221,6 +224,7 @@ Cameras:<br>
 <button onClick="Processing.getInstanceById('sketch').setCamera('650D',         40*1024*1024, 5184, 3456, 1.62);">650D</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('EOS-M',        40*1024*1024, 5184, 3456, 1.62);">EOS-M</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('50D',          70*1024*1024, 4752, 3168, 1.62);">50D</button>
+<button onClick="Processing.getInstanceById('sketch').setCamera('60D',          21*1024*1024, 5184, 3456, 1.62);">60D</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('7D',           80*1024*1024, 5184, 3456, 1.62);">7D</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('6D',           40*1024*1024, 5472, 3658, 1.00);">6D</button>
 <button onClick="Processing.getInstanceById('sketch').setCamera('5D Mark II',   75*1024*1024, 5616, 3744, 1.00);">5D Mark II</button>
