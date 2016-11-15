@@ -27,6 +27,8 @@ mode_fps = 24;
 mode_ar_x = 16;
 mode_ar_y = 9;
 
+bit_depth = 14;
+
 void draw_outline(t_x, t_y, t_max_x, t_max_y, t_crop, t_color, t_name, t_name2, t_name3) {
 
 	stroke(t_color);
@@ -89,7 +91,7 @@ void draw() {
 	}
 	
     if (last_bw > 0) {
-        t_text = str('Selected mode:   ') + str(mode_ss_x) + str('x') + str(mode_ss_y) + str(' sampling, ') + str(mode_ar_x) + str(':') + str(mode_ar_y) + str(' aspect ratio, ') + nf(last_crop,1,2) + str('x crop, ') + str(t_res) + str(' ') + str(mode_fps) + str('fps, ') + nf(last_bw/1024/1024,1,1) + str('MB/s ~') + nf(32*1000*1000*1000/60/last_bw,1,1) + str('min per 32GB card');
+        t_text = str('Selected mode:   ') + str(mode_ss_x) + str('x') + str(mode_ss_y) + str(' sampling, ') + str(mode_ar_x) + str(':') + str(mode_ar_y) + str(' aspect ratio, ') + nf(last_crop,1,2) + str('x crop, ') + str(t_res) + str(' ') + str(mode_fps) + str('fps, ') + str(bit_depth) + str(' bit, ' ) + nf(last_bw/1024/1024,1,1) + str('MB/s ~') + nf(32*1000*1000*1000/60/last_bw,1,1) + str('min per 32GB card');
         text(t_text, 5, canvas_y - 5);
 	}
     
@@ -113,7 +115,7 @@ void calc_max() {
 		if (t_y%2) {
 			 t_y -= 1;
 		}
-		t_bw = 1.0 * t_x * t_y * mode_fps * 14 / 8;
+		t_bw = 1.0 * t_x * t_y * mode_fps * bit_depth / 8;
 		t_crop = sensor_crop * sensor_x / (mode_ss_x * t_x);
 		
 		if (t_x > n_max_x) continue;
@@ -212,6 +214,10 @@ void setBandwidth(t_camera_bandwidth){
 	camera_bandwidth = t_camera_bandwidth * 1024 * 1024;
 }
 
+void setBitDepth(t_bit_depth){
+	bit_depth = t_bit_depth;
+}
+
 </script>
 
 <canvas id="sketch"></canvas></p>
@@ -252,6 +258,11 @@ Aspect ratios:<br>
 <input type="textfield" value="3.00" id="inputAspect1" size="5" style="text-align: right"/>:<input type="textfield" value="1" id="inputAspect2" size="5"/> 
 <button onClick="Processing.getInstanceById('sketch').setAspect( document.getElementById('inputAspect1').value, document.getElementById('inputAspect2').value );">set aspect ratio</button>
 
+<br><br>
+Bit depth:<br/>
+<button onClick="Processing.getInstanceById('sketch').setBitDepth(10);">10 Bit</button>
+<button onClick="Processing.getInstanceById('sketch').setBitDepth(12);">12 Bit</button>
+<button onClick="Processing.getInstanceById('sketch').setBitDepth(14);">14 Bit</button>
 
 <br><br>
 Frame rate (50/60fps only usable with 3x5 subsampling):<br>
